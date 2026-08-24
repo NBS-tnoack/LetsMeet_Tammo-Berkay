@@ -40,3 +40,5 @@
 - MongoDB-Telefonnummern, gerichtete Likes und gerichtete Nachrichten werden über die E-Mail-Adresse übernommen.
 - Zeitstempel werden als Zeitwerte importiert; die Quelle verwendet sowohl `YYYY-MM-DD HH:MM:SS` als auch `DD.MM.YYYY HH:MM:SS`.
 - Hobbys und Prioritäten stammen in V2 aus Excel und erhalten `source = 'excel'`. Der Interessenwert `mw` wird als zwei Sachverhalte (`m` und `w`) ausgegeben; die Codes selbst bleiben unverändert.
+- Der V2-Checker meldet 50 verschiedene `conversation_id`; bei 48 IDs gibt es mehrere Teilnehmerpaare. Deshalb ist `conversation_id` keine eindeutige Nachrichten-ID, sondern gruppiert Nachrichten einer Unterhaltung. Der Wert bleibt als Attribut jeder Nachricht erhalten.
+- Der V2-Checker meldet bei einer Person den Telefonwert `birgit.voss@gmaiil.ork`. Das ist ein auffälliger, wahrscheinlich fachlich falscher Quellwert, aber kein leerer Platzhalter. Er wird unverändert übernommen und als offene Rückfrage an die Kundin markiert; eine eigene Korrektur würde die Quelle verfälschen.
