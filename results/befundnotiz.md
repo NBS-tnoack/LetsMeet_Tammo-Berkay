@@ -31,3 +31,12 @@
 
 - Namen, Adressen, Telefonnummern, E-Mail-Adressen und Geburtsdaten sind personenbezogene Daten und besonders sorgfältig zu behandeln.
 - Die Quelldatei und Datenbankzugänge werden nicht öffentlich geteilt. Zugangsdaten werden nicht in Git versioniert.
+
+### 24.08.2026 - Akt-2-Quellenvergleich und Entscheidungen
+
+- MongoDB enthält 1.576 Nutzer, 430 Nutzer mit Likes und 270 Nutzer mit Nachrichten.
+- Für V2 werden die Namen aus MongoDB übernommen. Dadurch werden sechs äußere Leerzeichen aus der Excel-Lieferung entsprechend der Kundinnenquelle entfernt.
+- Bei `katharina.prommer@autluuk.kom` steht in Excel `Prommer, Katharina`, in MongoDB jedoch `Vogelsang, Katharina`. Für V2 gilt die MongoDB-Angabe als jüngerer Stammdatenstand.
+- MongoDB-Telefonnummern, gerichtete Likes und gerichtete Nachrichten werden über die E-Mail-Adresse übernommen.
+- Zeitstempel werden als Zeitwerte importiert; die Quelle verwendet sowohl `YYYY-MM-DD HH:MM:SS` als auch `DD.MM.YYYY HH:MM:SS`.
+- Hobbys und Prioritäten stammen in V2 aus Excel und erhalten `source = 'excel'`. Der Interessenwert `mw` wird als zwei Sachverhalte (`m` und `w`) ausgegeben; die Codes selbst bleiben unverändert.
