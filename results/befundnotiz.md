@@ -62,3 +62,8 @@
 - `encoding-invalid.xml`: abgelehnt, weil ein ungültiges Ersatzzeichen `�` enthalten ist.
 - `encoding-mojibake.xml`: verändert übernommen; `MÃ¼ller` wurde als korrigiertes `Müller` gespeichert.
 - Der zweite identische Transferimport verändert keine der sechs Vertrags-Views und vervielfacht keine Ablehnungen.
+
+### Modellierungsstation
+
+- ERD und Ableitung wurden in der LetsMeet-Modellierungsstation geprüft: `Alles korrekt – gut gebaut`.
+- Freigabe-URL: https://station.heidelab.de/letsmeet-erd/#d=1.pVRLbtswEL0L14IgitSH2rUoimYTGPCuhWFQ1tgiIpMGOSrqGDpLN7lJLlaoklMqkZwW3ZHzeTPz5pEXItv9QZZwV5GCNIDuCIAkIEdTQdOQ4kJAo0IJCJoU3y5EyyOQgqzAOqNJQCSiVWWL4HvhKFVDAqIcrnd104Jz0JACbQtd8BK1V9bh9vfFszZyxlgqi_W2kjixnoxD2Wx3ppqYdwrPk7Da6EnAAXQF1res0crnn0C6jWf8YsryvDRi3TuHPufn9JE-GzRLQL3v3r5L1ieJoF7TsrJmr5pSNdW083u5q63a1bhUtDTVhCIHGrcSJywa_R2sk6iM3qqKzMEv9u03c6cRbO9cakYNATgscglwE5ASHhXUrT6MWpS-EEtvYw_SVh9IQfR4_jier7uTi8ScrDL2lX6cae3uqo03NcfdXkvSScnZDH8782nBn4d02j8_6QPOI71c3hn4KA9LA69RYuv8cb-CwlOrH3BpYn-h84Vn0_5yOa69oduVfX7agwX9uNTcP5Dr-m_gP5ktYW-hHXA2XdB_Sap_Mb1CL1eU4kJ-kILSPA3jlEZ5xpOMsiwgZ1KkcRJmgkZpSjkXLM-7YGTqVhalSRzSPE2EiGnGozzugkGJY1YmQprmCY-54CJmORvTsigUWZRnEU95nkW0CzzGhtyYChayhKUs5lQwLoaSPOFhD8TSNMqZoIJ1gSeFm3WZEGEmkoSxKIt5KnjXdb8A
