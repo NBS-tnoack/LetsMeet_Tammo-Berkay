@@ -7,7 +7,6 @@ from pathlib import Path
 
 import psycopg2
 from openpyxl import load_workbook
-from psycopg2.extras import execute_values
 from pymongo import MongoClient
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,10 +112,27 @@ def main() -> None:
     with connect_postgres() as connection:
         with connection.cursor() as cursor:
             cursor.execute(SCHEMA.read_text(encoding="utf-8"))
-            inserted_people = execute_values(cursor, "INSERT INTO migration_persons (email, first_name, last_name, birth_date, postal_code, city, phone, gender) VALUES %s RETURNING person_id, email", [tuple(p[key] for key in ("email", "first_name", "last_name", "birth_date", "postal_code", "city", "phone", "gender")) for p in people], fetch=True)
-            person_ids = {email: person_id for person_id, email in inserted_people}
-            interests = [(person_ids[p["email"]], code) for p in people for code in p["interest_codes"]]
-            hobbies = [(person_ids[p["email"]], name, priority, "excel") for p in people for name, priority in p["hobbies"]]
+            person_ids = {}
+            for person in people:
+                cursor.execute(
+                    """
+                    INSERT INTO migration_persons
+                        (email, first_name, last_name, birth_date, postal_code, city, phone, gender)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING person_id
+                    """,
+                    tuple(person[key] for key in ("email", "first_name", "last_name", "birth_date", "postal_code", "city", "phone", "gender")),
+                )
+                person_ids[person["email"]] = cursor.fetchone()[0]
+
+            interests = []
+            hobbies = []
+            for person in people:
+                person_id = person_ids[person["email"]]
+                for code in person["interest_codes"]:
+                    interests.append((person_id, code))
+                for name, priority in person["hobbies"]:
+                    hobbies.append((person_id, name, priority, "excel"))
             likes = []
             messages = []
             for person in people:
@@ -131,10 +147,26 @@ def main() -> None:
                     if target is None:
                         raise ValueError(f"Unbekannte Nachrichten-Adresse: {message['receiver_email']}")
                     messages.append((sender_id, person_ids[target], str(message["message"]), parse_timestamp(message["timestamp"]), int(message["conversation_id"])))
-            execute_values(cursor, "INSERT INTO migration_interests_data (person_id, interest_code) VALUES %s", interests)
-            execute_values(cursor, "INSERT INTO migration_hobbies_data (person_id, hobby_name, priority, source) VALUES %s", hobbies)
-            execute_values(cursor, "INSERT INTO migration_likes_data (liker_id, liked_id, status, liked_at) VALUES %s", likes)
-            execute_values(cursor, "INSERT INTO migration_messages_data (sender_id, receiver_id, body, sent_at, conversation_id) VALUES %s", messages)
+            for interest in interests:
+                cursor.execute(
+                    "INSERT INTO migration_interests_data (person_id, interest_code) VALUES (%s, %s)",
+                    interest,
+                )
+            for hobby in hobbies:
+                cursor.execute(
+                    "INSERT INTO migration_hobbies_data (person_id, hobby_name, priority, source) VALUES (%s, %s, %s, %s)",
+                    hobby,
+                )
+            for like in likes:
+                cursor.execute(
+                    "INSERT INTO migration_likes_data (liker_id, liked_id, status, liked_at) VALUES (%s, %s, %s, %s)",
+                    like,
+                )
+            for message in messages:
+                cursor.execute(
+                    "INSERT INTO migration_messages_data (sender_id, receiver_id, body, sent_at, conversation_id) VALUES (%s, %s, %s, %s, %s)",
+                    message,
+                )
     print(f"V2-Import abgeschlossen: {len(people)} Personen, {len(interests)} Interessen, {len(hobbies)} Hobbys, {len(likes)} Likes, {len(messages)} Nachrichten")
 
 

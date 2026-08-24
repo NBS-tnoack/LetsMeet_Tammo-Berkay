@@ -6,7 +6,6 @@ from pathlib import Path
 
 import psycopg2
 from openpyxl import load_workbook
-from psycopg2.extras import execute_values
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Lets Meet DB Dump.xlsx"
@@ -82,15 +81,15 @@ def main() -> None:
     with connect() as connection:
         with connection.cursor() as cursor:
             cursor.execute(SCHEMA.read_text(encoding="utf-8"))
-            execute_values(
-                cursor,
-                """
-                INSERT INTO migration_persons
-                    (email, first_name, last_name, birth_date, postal_code, city)
-                VALUES %s
-                """,
-                records,
-            )
+            for record in records:
+                cursor.execute(
+                    """
+                    INSERT INTO migration_persons
+                        (email, first_name, last_name, birth_date, postal_code, city)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    """,
+                    record,
+                )
     print(f"Import abgeschlossen: {len(records)} Personen")
 
 
