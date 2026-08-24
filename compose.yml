@@ -1,0 +1,58 @@
+volumes:
+  lf8_lets_meet_postgres_data:
+    driver: local
+  lf8_lets_meet_mongodb_data:
+    driver: local
+  lf8_lets_meet_check_history:
+    driver: local
+
+services:
+  postgres_for_lf8_starter:
+    container_name: lf8_lets_meet_postgres_container
+    image: postgres:16.4
+    volumes:
+      - lf8_lets_meet_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: lf8_lets_meet_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+    ports:
+      # Nur an loopback binden: Docker-DNAT laeuft an ufw vorbei, ein Binding an
+      # 0.0.0.0 stellt die DB damit ungefiltert ins Internet.
+      - "${LETSMEET_PG_PORT:-127.0.0.1:5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d lf8_lets_meet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  mongodb_for_lf8:
+    container_name: lf8_lets_meet_mongodb_container
+    image: berndheidemann/letsmeet-mongodb:v2.1-2026-07-25
+    volumes:
+      - lf8_lets_meet_mongodb_data:/data/db
+    ports:
+      - "${LETSMEET_MONGO_PORT:-127.0.0.1:27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: LetsMeet
+
+  kundinnen_app:
+    container_name: lf8_lets_meet_kundinnen_app
+    image: berndheidemann/letsmeet-kundinnen-app:v3-result-labels-2026-08-19
+    ports:
+      # Oeffentlich erreichbar ist die App ueber Caddy (letsmeet.heide-dev.de),
+      # das per localhost proxyt — der Container braucht kein 0.0.0.0.
+      - "${LETSMEET_APP_PORT:-127.0.0.1:3611}:3611"
+    volumes:
+      - lf8_lets_meet_check_history:/data
+    environment:
+      PGHOST: postgres_for_lf8_starter
+      PGPORT: 5432
+      PGDATABASE: lf8_lets_meet_db
+      PGUSER: user
+      PGPASSWORD: secret
+      CONTRACT_VERSION: ${LETSMEET_CONTRACT_VERSION:-V1}
+    depends_on:
+      postgres_for_lf8_starter:
+        condition: service_healthy
