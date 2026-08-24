@@ -42,3 +42,23 @@
 - Hobbys und Prioritäten stammen in V2 aus Excel und erhalten `source = 'excel'`. Der Interessenwert `mw` wird als zwei Sachverhalte (`m` und `w`) ausgegeben; die Codes selbst bleiben unverändert.
 - Der V2-Checker meldet 50 verschiedene `conversation_id`; bei 48 IDs gibt es mehrere Teilnehmerpaare. Deshalb ist `conversation_id` keine eindeutige Nachrichten-ID, sondern gruppiert Nachrichten einer Unterhaltung. Der Wert bleibt als Attribut jeder Nachricht erhalten.
 - Der V2-Checker meldet bei einer Person den Telefonwert `birgit.voss@gmaiil.ork`. Das ist ein auffälliger, wahrscheinlich fachlich falscher Quellwert, aber kein leerer Platzhalter. Er wird unverändert übernommen und als offene Rückfrage an die Kundin markiert; eine eigene Korrektur würde die Quelle verfälschen.
+
+### 24.08.2026 - Akt 3 XML-Profiling
+
+- Die XML-Datei enthält 100 bekannte Personen mit insgesamt 300 Hobbyzuordnungen.
+- Alle XML-E-Mail-Adressen gehören zu Personen aus dem bestehenden Import.
+- Keine XML-Hobbyzuordnung ist mit einer Excel-Hobbyzuordnung identisch.
+- XML-Hobbys erhalten `source = 'xml'` und `priority = NULL`.
+- Der XML-Import ist idempotent: gleiche Person-Hobby-Zuordnungen werden beim erneuten Import nicht vervielfacht.
+
+### 24.08.2026 - Akt 3 Transferentscheidungen
+
+- `/transferpack/records/like[1]`: abgelehnt, weil die Zielperson unbekannt ist.
+- `/transferpack/records/hobby[1]`: abgelehnt, weil die Person-Hobby-Zuordnung bereits vorhanden ist.
+- `/transferpack/records/hobby[2]`: abgelehnt, weil die Priorität `101` außerhalb des vereinbarten Bereichs `-100` bis `100` liegt.
+- `/transferpack/records/profile[1]`: abgelehnt, weil der Sentinelwert `unbekannt` enthalten ist.
+- `/transferpack/records/hobby[3]`: übernommen als neue XML-Hobbyzuordnung ohne Priorität.
+- `/transferpack/records/hobby[4]`: abgelehnt, weil die Person-Hobby-Zuordnung durch den vorherigen Datensatz bereits vorhanden ist.
+- `encoding-invalid.xml`: abgelehnt, weil ein ungültiges Ersatzzeichen `�` enthalten ist.
+- `encoding-mojibake.xml`: verändert übernommen; `MÃ¼ller` wurde als korrigiertes `Müller` gespeichert.
+- Der zweite identische Transferimport verändert keine der sechs Vertrags-Views und vervielfacht keine Ablehnungen.
