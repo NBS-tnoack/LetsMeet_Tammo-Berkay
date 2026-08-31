@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime
 from pathlib import Path
 
-import psycopg2
 from openpyxl import load_workbook
+
+from db import connect
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Lets Meet DB Dump.xlsx"
@@ -27,6 +27,8 @@ def parse_row(row: dict[str, object], row_number: int) -> tuple[str, str, str, s
     last_name, first_name = name_parts
 
     raw_address = str(row[HEADERS["address"]])
+    # Nur an den ersten beiden Kommas trennen, denn ein dritter Ortsname wie
+    # "Demmin, Hansestadt" darf nicht in zwei Teile zerrissen werden.
     address_parts = raw_address.split(", ", 2)
     if len(address_parts) != 3:
         raise ValueError(f"Zeile {row_number}: Adresse hat nicht drei Teile")
@@ -60,20 +62,12 @@ def read_source() -> list[tuple[str, str, str, str, str, str]]:
         source_row = dict(zip(headers, values))
         records.append(parse_row(source_row, row_number))
 
+    # Groß-/Kleinschreibung ignorieren wir hier bewusst, weil "Anna@x.de" und
+    # "anna@x.de" laut Auftrag dieselbe Person sind.
     emails = [record[0].casefold() for record in records]
     if len(emails) != len(set(emails)):
         raise ValueError("E-Mail-Adressen sind nicht eindeutig (Groß-/Kleinschreibung ignoriert)")
     return records
-
-
-def connect():
-    return psycopg2.connect(
-        host=os.getenv("PGHOST", "127.0.0.1"),
-        port=os.getenv("PGPORT", "5432"),
-        dbname=os.getenv("PGDATABASE", "lf8_lets_meet_db"),
-        user=os.getenv("PGUSER", "user"),
-        password=os.getenv("PGPASSWORD", "secret"),
-    )
 
 
 def main() -> None:

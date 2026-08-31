@@ -5,9 +5,10 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-import psycopg2
 from openpyxl import load_workbook
 from pymongo import MongoClient
+
+from db import connect
 
 ROOT = Path(__file__).resolve().parents[1]
 EXCEL_SOURCE = ROOT / "Lets Meet DB Dump.xlsx"
@@ -34,6 +35,7 @@ def parse_date(value: object):
 
 
 def parse_hobbies(value: object) -> list[tuple[str, int]]:
+    # Format in der Excel-Zelle: "Lesen %78%; Kochen %-20%" usw., getrennt durch "; "
     if value is None or str(value) == "":
         return []
     hobbies = []
@@ -65,7 +67,7 @@ def read_excel() -> tuple[list[dict[str, object]], dict[str, str]]:
             "birth_date": parse_date(row["Geburtsdatum"]),
             "postal_code": postal_code,
             "city": city,
-            "phone": None,
+            "phone": None,  # kommt erst aus MongoDB, Excel hat keine Telefonnummer
             "gender": str(row["Geschlecht (m/w/nonbinary)"]),
             "interest_codes": list(str(row["Interessiert an"])),
             "hobbies": parse_hobbies(row["Hobby1 %Prio1%; Hobby2 %Prio2%; Hobby3 %Prio3%; Hobby4 %Prio4%; Hobby5 %Prio5%;"]),
@@ -79,20 +81,13 @@ def read_excel() -> tuple[list[dict[str, object]], dict[str, str]]:
 
 def parse_timestamp(value: object) -> datetime:
     text = str(value)
+    # Mongo liefert die Zeitstempel mal so, mal so - beide Formate kommen tatsaechlich vor
     for pattern in ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y %H:%M:%S"):
         try:
             return datetime.strptime(text, pattern)
         except ValueError:
             continue
     raise ValueError(f"Unbekanntes Zeitformat: {text!r}")
-
-
-def connect_postgres():
-    return psycopg2.connect(
-        host=os.getenv("PGHOST", "127.0.0.1"), port=os.getenv("PGPORT", "5432"),
-        dbname=os.getenv("PGDATABASE", "lf8_lets_meet_db"), user=os.getenv("PGUSER", "user"),
-        password=os.getenv("PGPASSWORD", "secret"),
-    )
 
 
 def main() -> None:
@@ -107,9 +102,10 @@ def main() -> None:
     for person in people:
         person["mongo"] = by_email[person["email"].casefold()]
         person["phone"] = str(person["mongo"].get("phone", ""))
+        # MongoDB gilt als der neuere Stand, deshalb ueberschreiben wir den Excel-Namen
         person["first_name"], person["last_name"] = parse_name(person["mongo"].get("name", ""))
 
-    with connect_postgres() as connection:
+    with connect() as connection:
         with connection.cursor() as cursor:
             cursor.execute(SCHEMA.read_text(encoding="utf-8"))
             person_ids = {}
