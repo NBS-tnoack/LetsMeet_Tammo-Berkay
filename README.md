@@ -357,8 +357,80 @@ Danach folgt die nächste Anweisung.
 
 # Akt 3 — Fortsetzung
 
-Beginnt Akt 3 erst, wenn euch der nächste Auftrag angezeigt wird. Bis dahin sind ausschließlich
-Akt 1 und Akt 2 verbindlich.
+## Ausgangslage
+
+Zwei weitere Quellen kommen dazu:
+
+- [`Lets_Meet_Hobbies.xml`](./Lets_Meet_Hobbies.xml) — eine Nachlieferung mit zusätzlichen
+  Hobbyzuordnungen für bereits bekannte Personen (per E-Mail-Adresse).
+- [`transferpack/`](./transferpack) — ein Übernahmearchiv mit `change-request.xml`,
+  `encoding-invalid.xml` und `encoding-mojibake.xml`. Es enthält sowohl übernehmbare als auch
+  fachlich oder technisch nicht übernehmbare Datensätze.
+
+## Auftrag
+
+1. Profiliert die XML-Nachlieferung und das Transferpaket; haltet Auffälligkeiten wie gewohnt in
+   der Befundnotiz fest.
+2. Erweitert Schema und Import um die neue Hobbyquelle (`source = 'xml'`, ohne Priorität).
+3. Spielt das Transferpaket in denselben Importprozess ein. Entscheidet je Datensatz, ob er
+   übernommen wird, und dokumentiert nicht übernehmbare Angaben nachvollziehbar — sowohl in der
+   Befundnotiz als auch über die View `migration_rejections`.
+4. Der Import muss ein zweites Mal ausführbar sein, ohne Duplikate zu erzeugen oder Ablehnungen zu
+   vervielfachen.
+
+## Datenvertrag für Akt 3 (V3)
+
+V3 erweitert den Datenvertrag aus Akt 2. `migration_user_hobbies` erhält zusätzlich Zeilen mit
+`source = 'xml'` und `priority = NULL`; dazu kommt eine neue Pflicht-View:
+
+```sql
+-- Pflicht-View, Spaltennamen und -typen exakt:
+-- migration_rejections(source text, source_ref text, reason text)
+```
+
+Regeln:
+
+- Eine Person-Hobby-Zuordnung ist über alle Quellen hinweg eindeutig (`email`, `hobby_name`),
+  unabhängig von `source`.
+- XML-Hobbys haben keine Priorität; `priority` bleibt `NULL`.
+- `migration_rejections` dokumentiert jeden nicht übernommenen Datensatz aus dem Transferpaket mit
+  eindeutiger `source` (Dateiname) und `source_ref` (Fundstelle) sowie einer nicht leeren
+  Begründung.
+- Ein zweiter, identischer Importlauf verändert keine der Vertrags-Views und erzeugt keine
+  zusätzlichen Ablehnungen.
+
+Startet die Anzeige-App für Akt 3 neu:
+
+Variante A — Docker:
+
+```bash
+LETSMEET_CONTRACT_VERSION=V3 docker compose up -d --force-recreate kundinnen_app
+```
+
+Variante B — Schulserver:
+
+```bash
+letsmeet contract V3
+```
+
+## Abschluss von Akt 3: Neuaufbau prüfen
+
+Leert die Datenbank wie in Akt 1 beschrieben, baut Excel-, MongoDB-, XML- und Transferimport
+gemeinsam neu auf und führt danach diesen Prüfbefehl im Terminal aus:
+
+Variante A — Docker:
+
+```bash
+docker compose run --rm -e CONTRACT_VERSION=V3 kundinnen_app node server/dist/cli.js
+```
+
+Variante B — Schulserver:
+
+```bash
+letsmeet check V3
+```
+
+Endet der Befehl mit Exit-Code `0`, ist die Abschlussprüfung für Akt 3 bestanden.
 
 ---
 
